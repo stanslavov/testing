@@ -4,8 +4,8 @@ namespace Testing
 {
     public class ExcelSheet
     {
-        public string Id { get; set; }
+        public string SubmissionUrl { get; set; }
 
-        public IEnumerable<string> Data { get; set; }
+        public Sheet[] Sheets { get; set; }
     }
 }
