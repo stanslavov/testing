@@ -16,7 +16,7 @@ namespace Testing
                 var json = result.Content.ReadAsStringAsync().Result;
                 Console.WriteLine(json);
 
-                var excelData = JsonConvert.DeserializeObject<IEnumerable<ExcelSheet>>(json);
+                var excelData = JsonConvert.DeserializeObject<Data>(json);
 
                 Console.WriteLine(excelData);
             }
