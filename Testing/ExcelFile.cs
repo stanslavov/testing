@@ -2,7 +2,7 @@
 
 namespace Testing
 {
-    public class ExcelSheet
+    public class ExcelFile
     {
         public string SubmissionUrl { get; set; }
 
