@@ -21,10 +21,18 @@ namespace Testing
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
                 var test = excelData.Sheets[3].Data;
+
+                for (int i = 0; i < test.Count; i++)
+                {
+                    for (int j = 0; j < test[i].Length; j++)
+                    {
+                        Console.WriteLine(test[i][j].GetType());
+                    }
+                }
+
                 var operands = new Queue<object>();
                 var operators = new Queue<object>();
                 var booleans = new Queue<object>();
-
 
                 for (int i = 0; i < test.Count; i++)
                 {
@@ -32,7 +40,7 @@ namespace Testing
                     {
                         var obj = test[i][j];
 
-                        if (obj.GetType() == typeof(Int64))
+                        if (obj.GetType() == typeof(Int64) || obj.GetType() == typeof(Int32))
                         {
                             operands.Enqueue(obj);
                         }
@@ -48,6 +56,8 @@ namespace Testing
                         }
                     }
                 }
+
+
 
                 //Console.WriteLine(list);
 
