@@ -19,21 +19,24 @@ namespace Testing
                 Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[8].Data;
+                var test = excelData.Sheets[3].Data;
 
-                var line = new List<object>();
+                var cells = new Dictionary<string, object>();
 
                 for (int i = 0; i < test.Count; i++)
                 {
                     for (int j = 0; j < test[i].Length; j++)
                     {
                         var obj = test[i][j];
+                        string num = (i + 1).ToString();
+                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                        var cell = letter + num;
 
-                        line.Add(obj);
+                        cells.Add(cell, obj);
                     }
                 }
 
-                var results = Calculate(line);
+                var results = Calculate(cells);
                 //var ress = new List<string[]>();
                 //ress.Add(new[] { "22", "212212", "212234" });
 
@@ -49,58 +52,109 @@ namespace Testing
             }
         }
 
-        public static List<string[]> Calculate(List<object> line)
+        public static List<string[]> Calculate(Dictionary<string, object> cells)
         {
-            Regex regex = new Regex(@"=[A-Z][A-Z]");
-            var operands = new Queue<object>();
-            long result = 0;
+            Regex regex = new Regex(@"\=([A-Z]+)\((.*)\)");
+            string operation = string.Empty;
+            string[] operands = Array.Empty<string>();
+            var values = new List<object>();
             var calculated = new List<string[]>();
+            long calculation = 1;
 
-            foreach (var item in line)
+            foreach (var cell in cells)
             {
-                if (item.GetType() == typeof(Int64))
+                var match = regex.Match(cell.ToString());
+
+                if (match.Success)
                 {
-                    calculated.Add(new[] { item.ToString() });
-                    operands.Enqueue(item);
-                }
-
-                if (item.GetType() == typeof(bool))
-                {
-                    operands.Enqueue(item);
-                }
-
-                if (item.GetType() == typeof(string))
-                {
-                    var match = regex.Match(item.ToString());
-
-                    if (match.ToString() == "=SU")
-                    {
-                        foreach (var operand in operands)
-                        {
-                            result += (Int64)operand;
-                        }
-
-                        calculated.Add(new[] { result.ToString() });
-                    }
-
-                    if (match.ToString() == "=MU")
-                    {
-                        foreach (var operand in operands)
-                        {
-                            result *= (Int64)operand;
-                        }
-
-                        calculated.Add(new[] { result.ToString() });
-                    }
-
-                    if (match.ToString() == "=DI")
-                    {
-                        result = (Int64)operands.Dequeue() / (Int64)operands.Peek();
-
-                        calculated.Add(new[] { result.ToString() });
-                    }
+                    operation = match.Groups[1].Value;
+                    operands = match.Groups[2].Value.Split(", ");
                 }
             }
+
+            if (Enum.TryParse(operation, out EnumOperations result))
+            {
+                var type = cells[operands[0]].GetType();
+
+                for (int i = 0; i < operands.Length; i++)
+                {
+                    if (type != cells[operands[i]].GetType())
+                    {
+                        Console.WriteLine("#ERROR: Incompatible types");
+                    }
+
+                    values.Add(cells[operands[i]]);
+                }
+
+                calculated.Add(operands);
+
+                if (operation == "SUM")
+                {
+                    foreach (var item in values)
+                    {
+                        calculation += (Int64)item;
+                    }
+                }
+
+                if (operation == "MULTIPLY")
+                {
+                    foreach (var item in values)
+                    {
+                        calculation *= (Int64)item;
+                    }
+                }
+
+                calculated.Add(new[] { calculation.ToString() });
+            }
+
+
+            
+
+            //foreach (var item in line)
+            //{
+            //    if (item.GetType() == typeof(Int64))
+            //    {
+            //        calculated.Add(new[] { item.ToString() });
+            //        operands.Enqueue(item);
+            //    }
+
+            //    if (item.GetType() == typeof(bool))
+            //    {
+            //        operands.Enqueue(item);
+            //    }
+
+            //    if (item.GetType() == typeof(string))
+            //    {
+            //        var match = regex.Match(item.ToString());
+
+            //        if (match.ToString() == "=SU")
+            //        {
+            //            foreach (var operand in operands)
+            //            {
+            //                result += (Int64)operand;
+            //            }
+
+            //            calculated.Add(new[] { result.ToString() });
+            //        }
+
+            //        if (match.ToString() == "=MU")
+            //        {
+            //            foreach (var operand in operands)
+            //            {
+            //                result *= (Int64)operand;
+            //            }
+
+            //            calculated.Add(new[] { result.ToString() });
+            //        }
+
+            //        if (match.ToString() == "=DI")
+            //        {
+            //            result = (Int64)operands.Dequeue() / (Int64)operands.Dequeue();
+
+            //            calculated.Add(new[] { result.ToString() });
+            //        }
+            //    }
+            //}
 
             return calculated;
         }
