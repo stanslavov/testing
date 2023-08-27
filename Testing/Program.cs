@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Testing
 {
@@ -20,19 +19,9 @@ namespace Testing
                 Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[3].Data;
+                var test = excelData.Sheets[8].Data;
 
-                for (int i = 0; i < test.Count; i++)
-                {
-                    for (int j = 0; j < test[i].Length; j++)
-                    {
-                        Console.WriteLine(test[i][j].GetType());
-                    }
-                }
-
-                var operands = new Queue<object>();
-                var operators = new Queue<object>();
-                var booleans = new Queue<object>();
+                var line = new List<object>();
 
                 for (int i = 0; i < test.Count; i++)
                 {
@@ -40,40 +29,80 @@ namespace Testing
                     {
                         var obj = test[i][j];
 
-                        if (obj.GetType() == typeof(Int64) || obj.GetType() == typeof(Int32))
-                        {
-                            operands.Enqueue(obj);
-                        }
-
-                        if (obj.GetType() == typeof(string))
-                        {
-                            operators.Enqueue(obj);
-                        }
-
-                        if (obj.GetType() == typeof(bool))
-                        {
-                            booleans.Enqueue(obj);
-                        }
+                        line.Add(obj);
                     }
                 }
 
+                var results = Calculate(line);
+                //var ress = new List<string[]>();
+                //ress.Add(new[] { "22", "212212", "212234" });
 
-
-                //Console.WriteLine(list);
-
-                //Type myType = test.GetType();
-                //IList<PropertyInfo> props = new List<PropertyInfo>(myType.GetProperties());
-
-                //foreach (PropertyInfo prop in props)
+                //var newPost = new ResultFile()
                 //{
-                //    object propValue = prop.GetValue(test, null);
+                //    Email = "someemail",
+                //    Results = new[] { new ResultSheet { Data = ress } }
+                //};
 
-                //    // Do something with propValue
-
-                //    Console.WriteLine(propValue);
-
-                //}
+                //var newPostJson = JsonConvert.SerializeObject(newPost);
+                //var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
+                //var res = client.PostAsync(endpoint, payload).Result.Content.ReadAsStringAsync().Result;
             }
+        }
+
+        public static List<string[]> Calculate(List<object> line)
+        {
+            Regex regex = new Regex(@"=[A-Z][A-Z]");
+            var operands = new Queue<object>();
+            long result = 0;
+            var calculated = new List<string[]>();
+
+            foreach (var item in line)
+            {
+                if (item.GetType() == typeof(Int64))
+                {
+                    calculated.Add(new[] { item.ToString() });
+                    operands.Enqueue(item);
+                }
+
+                if (item.GetType() == typeof(bool))
+                {
+                    operands.Enqueue(item);
+                }
+
+                if (item.GetType() == typeof(string))
+                {
+                    var match = regex.Match(item.ToString());
+
+                    if (match.ToString() == "=SU")
+                    {
+                        foreach (var operand in operands)
+                        {
+                            result += (Int64)operand;
+                        }
+
+                        calculated.Add(new[] { result.ToString() });
+                    }
+
+                    if (match.ToString() == "=MU")
+                    {
+                        foreach (var operand in operands)
+                        {
+                            result *= (Int64)operand;
+                        }
+
+                        calculated.Add(new[] { result.ToString() });
+                    }
+
+                    if (match.ToString() == "=DI")
+                    {
+                        result = (Int64)operands.Dequeue() / (Int64)operands.Peek();
+
+                        calculated.Add(new[] { result.ToString() });
+                    }
+                }
+            }
+
+            return calculated;
         }
     }
 }
