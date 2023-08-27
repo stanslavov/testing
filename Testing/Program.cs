@@ -23,18 +23,34 @@ namespace Testing
 
                 var cells = new Dictionary<string, object>();
 
-                for (int i = 0; i < test.Count; i++)
+                foreach (var sheet in excelData.Sheets)
                 {
-                    for (int j = 0; j < test[i].Length; j++)
+                    for (int i = 0; i < sheet.Data.Count; i++)
                     {
-                        var obj = test[i][j];
-                        string num = (i + 1).ToString();
-                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                        var cell = letter + num;
+                        for (int j = 0; j < sheet.Data[i].Length; j++)
+                        {
+                            var obj = sheet.Data[i][j];
+                            string num = (i + 1).ToString();
+                            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                            var cell = letter + num;
 
-                        cells.Add(cell, obj);
+                            cells.Add(cell, obj);
+                        }
                     }
                 }
+
+                //for (int i = 0; i < test.Count; i++)
+                //{
+                //    for (int j = 0; j < test[i].Length; j++)
+                //    {
+                //        var obj = test[i][j];
+                //        string num = (i + 1).ToString();
+                //        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                //        var cell = letter + num;
+
+                //        cells.Add(cell, obj);
+                //    }
+                //}
 
                 var results = Calculate(cells);
                 //var ress = new List<string[]>();
@@ -107,54 +123,7 @@ namespace Testing
                 calculated.Add(new[] { calculation.ToString() });
             }
 
-
             
-
-            //foreach (var item in line)
-            //{
-            //    if (item.GetType() == typeof(Int64))
-            //    {
-            //        calculated.Add(new[] { item.ToString() });
-            //        operands.Enqueue(item);
-            //    }
-
-            //    if (item.GetType() == typeof(bool))
-            //    {
-            //        operands.Enqueue(item);
-            //    }
-
-            //    if (item.GetType() == typeof(string))
-            //    {
-            //        var match = regex.Match(item.ToString());
-
-            //        if (match.ToString() == "=SU")
-            //        {
-            //            foreach (var operand in operands)
-            //            {
-            //                result += (Int64)operand;
-            //            }
-
-            //            calculated.Add(new[] { result.ToString() });
-            //        }
-
-            //        if (match.ToString() == "=MU")
-            //        {
-            //            foreach (var operand in operands)
-            //            {
-            //                result *= (Int64)operand;
-            //            }
-
-            //            calculated.Add(new[] { result.ToString() });
-            //        }
-
-            //        if (match.ToString() == "=DI")
-            //        {
-            //            result = (Int64)operands.Dequeue() / (Int64)operands.Dequeue();
-
-            //            calculated.Add(new[] { result.ToString() });
-            //        }
-            //    }
-            //}
 
             return calculated;
         }
