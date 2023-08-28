@@ -65,7 +65,6 @@ namespace Testing
 
                 var results = Calculate(cells);
 
-
                 //var ress = new List<string[]>();
                 //ress.Add(new[] { "22", "212212", "212234" });
 
@@ -84,7 +83,7 @@ namespace Testing
         public static List<string[]> Calculate(Dictionary<string, object> cells)
         {
             Regex regex = new Regex(@"\=([A-Z]+)\((.*)\)");
-            //Regex regex2 = new Regex(@"\=([A-Z]+)\(([A-Z]+)\(([A-Z][0-9]\,\s[A-Z][0-9])\)");
+            Regex regex2 = new Regex(@"\=([A-Z]+)\(([A-Z]+)\(([A-Z][0-9]\,\s[A-Z][0-9])\)");
             string operation = string.Empty;
             string[] operands = Array.Empty<string>();
             var values = new List<object>();
@@ -103,14 +102,14 @@ namespace Testing
 
                 calculated.Add(new[] { cell.Value.ToString() });
 
-                //var match2 = regex2.Match(cell.ToString());
+                var match2 = regex2.Match(cell.ToString());
 
-                //if (match2.Success)
-                //{
-                //    operation = match2.Groups[1].Value;
-                //    var operation2 = match2.Groups[2].Value;
-                //    operands = match2.Groups[3].Value.Split(", ");
-                //}
+                if (match2.Success)
+                {
+                    operation = match2.Groups[1].Value;
+                    var operation2 = match2.Groups[2].Value;
+                    operands = match2.Groups[3].Value.Split(", ");
+                }
             }
 
             if (Enum.TryParse(operation, out EnumOperations result))
