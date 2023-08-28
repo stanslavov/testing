@@ -19,7 +19,7 @@ namespace Testing
                 Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[18].Data;
+                var test = excelData.Sheets[11].Data;
 
                 var cells = new Dictionary<string, object>();
                 //var resultSheets = new List<ResultSheet>();
@@ -88,7 +88,8 @@ namespace Testing
             string[] operands = Array.Empty<string>();
             var values = new List<object>();
             var calculated = new List<string[]>();
-            long calculation = 1;
+            long calculation = 0;
+            bool evaluation = false;
 
             foreach (var cell in cells)
             {
@@ -107,7 +108,7 @@ namespace Testing
                 if (match2.Success)
                 {
                     operation = match2.Groups[1].Value;
-                    var operation2 = match2.Groups[2].Value;
+                    //var operation2 = match2.Groups[2].Value;
                     operands = match2.Groups[3].Value.Split(", ");
                 }
             }
@@ -139,6 +140,8 @@ namespace Testing
 
                 if (operation == "MULTIPLY")
                 {
+                    calculation++;
+
                     foreach (var item in values)
                     {
                         calculation *= (Int64)item;
@@ -152,18 +155,26 @@ namespace Testing
 
                 if (operation == "GT")
                 {
-                    //foreach (var item in values)
-                    //{
-                    //    calculation *= (Int64)item;
-                    //}
+                    if ((Int64)values[0] > (Int64)values[1])
+                    {
+                        evaluation = true;
+                    }
+                    else
+                    {
+                        evaluation = false;
+                    }
                 }
 
                 if (operation == "EQ")
                 {
-                    //foreach (var item in values)
-                    //{
-                    //    calculation *= (Int64)item;
-                    //}
+                    if ((double)values[0] == (double)values[1])
+                    {
+                        evaluation = true;
+                    }
+                    else
+                    {
+                        evaluation = false;
+                    }
                 }
 
                 if (operation == "NOT")
@@ -205,8 +216,16 @@ namespace Testing
 
                 var formula = calculated.FirstOrDefault(x => x.First().Contains('='));
                 var index = calculated.IndexOf(formula);
-                calculated.Insert(index, new[] { calculation.ToString() });
                 calculated.Remove(formula);
+
+                if (calculation > 0)
+                {
+                    calculated.Insert(index, new[] { calculation.ToString() });
+                }
+                else
+                {
+                    calculated.Insert(index, new[] { evaluation.ToString() });
+                }
 
                 //calculated.Add(new[] { calculation.ToString() });
             }          
