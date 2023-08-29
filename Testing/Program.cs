@@ -19,7 +19,7 @@ namespace Testing
                 Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[19].Data;
+                var test = excelData.Sheets[5].Data;
 
                 var cells = new Dictionary<string, object>();
                 //var resultSheets = new List<ResultSheet>();
@@ -84,7 +84,9 @@ namespace Testing
         {
             Regex regex = new Regex(@"\=([A-Z]+)\((.*)\)");
             Regex regex2 = new Regex(@"\=([A-Z]+)\(([A-Z]+)\(([A-Z][0-9]\,\s[A-Z][0-9])\)");
-            //Regex regex3 = new Regex(@"\=([A-Z]+)\(\\\"([A - Z][a - z] +)\\\"\,\s(\\\",\s\\\")\,\s\\\"([A-Z][a-z]+.)\\\"\)");
+            Regex regex3 = new Regex(@"\=([A-Z]+)\(.([A-Z][a-z]+)..........([A-Z][a-z]+.).\)");
+            Regex regex4 = new Regex(@"\=([A-Z]+)\(([A-Z][0-9])....([a-z]+)....([[A-Z][0-9])\)");
+            Regex regex5 = new Regex(@"(=)([A-Z][0-9])");
             string operation = string.Empty;
             string[] operands = Array.Empty<string>();
             var values = new List<object>();
@@ -95,6 +97,8 @@ namespace Testing
 
             foreach (var cell in cells)
             {
+                calculated.Add(new[] { cell.Value.ToString() });
+
                 var match = regex.Match(cell.ToString());
 
                 if (match.Success)
@@ -103,15 +107,39 @@ namespace Testing
                     operands = match.Groups[2].Value.Split(", ");
                 }
 
-                calculated.Add(new[] { cell.Value.ToString() });
-
                 var match2 = regex2.Match(cell.ToString());
 
                 if (match2.Success)
                 {
                     operation = match2.Groups[1].Value;
-                    //var operation2 = match2.Groups[2].Value;
                     operands = match2.Groups[3].Value.Split(", ");
+                }
+
+                var match3 = regex3.Match(cell.ToString());
+
+                if (match3.Success)
+                {
+                    operation = match3.Groups[1].Value;
+                    operands = new[] { match3.Groups[2].Value + ", " + match3.Groups[3].Value };
+                }
+
+                var match4 = regex4.Match(cell.ToString());
+
+                if (match4.Success)
+                {
+                    operation = match4.Groups[1].Value;
+                    operands = new[] { cells[match4.Groups[2].Value] + " " + match4.Groups[3].Value + " " + cells[match4.Groups[4].Value] };
+                }
+
+                var match5 = regex5.Match(cell.ToString());
+
+                if (match5.Success)
+                {
+                    operation = match5.Groups[1].Value;
+                    var op = calculated.FirstOrDefault(x => x.First().Contains('='));
+                    var ind = calculated.IndexOf(op);
+                    calculated.Remove(op);
+                    calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
                 }
             }
 
@@ -127,21 +155,42 @@ namespace Testing
 
                 else
                 {
-                    var type = cells[operands[0]].GetType();
-
                     for (int i = 0; i < operands.Length; i++)
                     {
-                        if (!cells.ContainsKey(operands[i]) || type != cells[operands[i]].GetType())
+                        if (!cells.ContainsKey(operands[i]))
                         {
-                            Console.WriteLine("#ERROR: Incompatible types");
+                            values.Add((object)operands[i]);
+                        }
+                        else
+                        {
+                            values.Add(cells[operands[i]]);
+                        }
+                    }
+
+                    for (int i = 0; i < values.Count; i++)
+                    {
+                        var type = values[0].GetType();
+
+                        if (type != values[i].GetType())
+                        {
+                            values.Clear();
                             break;
                         }
-
-                        values.Add(cells[operands[i]]);
                     }
-                }
 
-                // calculated.Add(operands);
+                    //var type = cells[operands[0]].GetType();
+
+                    //for (int i = 0; i < operands.Length; i++)
+                    //{
+                    //    if (!cells.ContainsKey(operands[i]) || type != cells[operands[i]].GetType())
+                    //    {
+                    //        Console.WriteLine("#ERROR: Incompatible types");
+                    //        break;
+                    //    }
+
+                    //    values.Add(cells[operands[i]]);
+                    //}
+                }
 
                 if (operation == "SUM")
                 {
@@ -261,13 +310,16 @@ namespace Testing
                     calculated.Insert(index, new[] { concatenation });
                 }
 
+                else if (!values.Any())
+                {
+                    calculated.Insert(index, new[] { cells[operands[0]].ToString(), cells[operands[1]].ToString(), "#ERROR: Incompatible types" });
+                }
+
                 else
                 {
                     calculated.Insert(index, new[] { evaluation.ToString() });
                 }
-
-                //calculated.Add(new[] { calculation.ToString() });
-            }          
+            }
 
             return calculated;
         }
