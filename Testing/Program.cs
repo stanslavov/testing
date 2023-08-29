@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Testing
@@ -19,64 +20,56 @@ namespace Testing
                 Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[5].Data;
+                //var test = excelData.Sheets[15].Data;
 
                 var cells = new Dictionary<string, object>();
-                //var resultSheets = new List<ResultSheet>();
-
-                //foreach (var sheet in excelData.Sheets)
-                //{
-                //    for (int i = 0; i < sheet.Data.Count; i++)
-                //    {
-                //        for (int j = 0; j < sheet.Data[i].Length; j++)
-                //        {
-                //            var obj = sheet.Data[i][j];
-                //            string num = (i + 1).ToString();
-                //            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                //            var cell = letter + num;
-
-                //            cells.Add(cell, obj);
-                //        }
-                //    }
-
-                //    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
-
-                //    var post = new ResultFile()
-                //    {
-                //        Email = "email",
-                //        Results = resultSheets.ToArray()
-                //    };
-
-                //    cells.Clear();
-                //}
-
-                for (int i = 0; i < test.Count; i++)
+                var resultSheets = new List<ResultSheet>();
+                var post = new ResultFile()
                 {
-                    for (int j = 0; j < test[i].Length; j++)
-                    {
-                        var obj = test[i][j];
-                        string num = (i + 1).ToString();
-                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                        var cell = letter + num;
+                    Email = "email",
+                    Results = resultSheets.ToArray()
+                };
 
-                        cells.Add(cell, obj);
+                foreach (var sheet in excelData.Sheets)
+                {
+                    for (int i = 0; i < sheet.Data.Count; i++)
+                    {
+                        for (int j = 0; j < sheet.Data[i].Length; j++)
+                        {
+                            var obj = sheet.Data[i][j];
+                            string num = (i + 1).ToString();
+                            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                            var cell = letter + num;
+
+                            cells.Add(cell, obj);
+                        }
                     }
+
+                    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
+
+                    cells.Clear();
                 }
 
-                var results = Calculate(cells);
+                post.Results = resultSheets.ToArray();
 
-                //var ress = new List<string[]>();
-                //ress.Add(new[] { "22", "212212", "212234" });
-
-                //var newPost = new ResultFile()
+                //for (int i = 0; i < test.Count; i++)
                 //{
-                //    Email = "someemail",
-                //    Results = new[] { new ResultSheet { Data = ress } }
-                //};
+                //    for (int j = 0; j < test[i].Length; j++)
+                //    {
+                //        var obj = test[i][j];
+                //        string num = (i + 1).ToString();
+                //        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                //        var cell = letter + num;
 
-                //var newPostJson = JsonConvert.SerializeObject(newPost);
-                //var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
-                //var res = client.PostAsync(endpoint, payload).Result.Content.ReadAsStringAsync().Result;
+                //        cells.Add(cell, obj);
+                //    }
+                //}
+
+                //var results = Calculate(cells);
+
+                var newPostJson = JsonConvert.SerializeObject(post);
+                var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
+                var res = client.PostAsync(endpoint, payload).Result.Content.ReadAsStringAsync().Result;
             }
         }
 
@@ -159,7 +152,9 @@ namespace Testing
                     {
                         if (!cells.ContainsKey(operands[i]))
                         {
-                            values.Add((object)operands[i]);
+                            long parsed = 0;
+                            Int64.TryParse(operands[i], out parsed);
+                            values.Add(parsed);
                         }
                         else
                         {
