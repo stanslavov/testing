@@ -15,9 +15,10 @@ namespace Testing
             using (var client = new HttpClient())
             {
                 var endpoint = new Uri("https://www.wix.com/_serverless/hiring-task-spreadsheet-evaluator/sheets");
+                var endpoint2 = new Uri("https://www.wix.com/_serverless/hiring-code-upload");
                 var result = client.GetAsync(endpoint).Result;
                 var json = result.Content.ReadAsStringAsync().Result;
-                Console.WriteLine(json);
+                //Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
                 //var test = excelData.Sheets[15].Data;
@@ -26,7 +27,7 @@ namespace Testing
                 var resultSheets = new List<ResultSheet>();
                 var post = new ResultFile()
                 {
-                    Email = "email",
+                    Email = "stanislav.slavov88@gmail.com",
                     Results = resultSheets.ToArray()
                 };
 
@@ -69,7 +70,8 @@ namespace Testing
 
                 var newPostJson = JsonConvert.SerializeObject(post);
                 var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
-                var res = client.PostAsync(endpoint, payload).Result.Content.ReadAsStringAsync().Result;
+                var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
+                Console.WriteLine(res);
             }
         }
 
