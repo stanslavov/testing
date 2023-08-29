@@ -15,7 +15,7 @@ namespace Testing
             using (var client = new HttpClient())
             {
                 var endpoint = new Uri("https://www.wix.com/_serverless/hiring-task-spreadsheet-evaluator/sheets");
-                var endpoint2 = new Uri("https://www.wix.com/_serverless/hiring-code-upload");
+                var endpoint2 = new Uri("https://www.wix.com/_serverless/hiring-task-spreadsheet-evaluator/verify/eyJ0YWdzIjpbXX0");
                 var result = client.GetAsync(endpoint).Result;
                 var json = result.Content.ReadAsStringAsync().Result;
                 //Console.WriteLine(json);
@@ -90,9 +90,15 @@ namespace Testing
             bool evaluation = false;
             string concatenation = string.Empty;
 
+            for (int i = 0; i < cells.Count; i++)
+            {
+                calculated.Add(new string[cells.Count]);
+            }
+            
             foreach (var cell in cells)
             {
-                calculated.Add(new[] { cell.Value.ToString() });
+                var cellRow = int.Parse(cell.Key[1].ToString());
+                calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
 
                 var match = regex.Match(cell.ToString());
 
@@ -133,8 +139,7 @@ namespace Testing
                     operation = match5.Groups[1].Value;
                     var op = calculated.FirstOrDefault(x => x.First().Contains('='));
                     var ind = calculated.IndexOf(op);
-                    calculated.Remove(op);
-                    calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
+                    calculated[cellRow - 1][cellRow - 1] = cells[match5.Groups[2].Value].ToString();
                 }
             }
 
