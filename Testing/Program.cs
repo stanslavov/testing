@@ -19,7 +19,7 @@ namespace Testing
                 Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[11].Data;
+                var test = excelData.Sheets[19].Data;
 
                 var cells = new Dictionary<string, object>();
                 //var resultSheets = new List<ResultSheet>();
@@ -84,12 +84,14 @@ namespace Testing
         {
             Regex regex = new Regex(@"\=([A-Z]+)\((.*)\)");
             Regex regex2 = new Regex(@"\=([A-Z]+)\(([A-Z]+)\(([A-Z][0-9]\,\s[A-Z][0-9])\)");
+            //Regex regex3 = new Regex(@"\=([A-Z]+)\(\\\"([A - Z][a - z] +)\\\"\,\s(\\\",\s\\\")\,\s\\\"([A-Z][a-z]+.)\\\"\)");
             string operation = string.Empty;
             string[] operands = Array.Empty<string>();
             var values = new List<object>();
             var calculated = new List<string[]>();
             long calculation = 0;
             bool evaluation = false;
+            string concatenation = string.Empty;
 
             foreach (var cell in cells)
             {
@@ -115,17 +117,28 @@ namespace Testing
 
             if (Enum.TryParse(operation, out EnumOperations result))
             {
-                var type = cells[operands[0]].GetType();
-
-                for (int i = 0; i < operands.Length; i++)
+                if (operation == "CONCAT")
                 {
-                    if (!cells.ContainsKey(operands[i]) || type != cells[operands[i]].GetType())
+                    for (int i = 0; i < operands.Length; i++)
                     {
-                        Console.WriteLine("#ERROR: Incompatible types");
-                        break;
+                        values.Add(operands[i]);
                     }
+                }
 
-                    values.Add(cells[operands[i]]);
+                else
+                {
+                    var type = cells[operands[0]].GetType();
+
+                    for (int i = 0; i < operands.Length; i++)
+                    {
+                        if (!cells.ContainsKey(operands[i]) || type != cells[operands[i]].GetType())
+                        {
+                            Console.WriteLine("#ERROR: Incompatible types");
+                            break;
+                        }
+
+                        values.Add(cells[operands[i]]);
+                    }
                 }
 
                 // calculated.Add(operands);
@@ -179,18 +192,38 @@ namespace Testing
 
                 if (operation == "NOT")
                 {
-                    //foreach (var item in values)
-                    //{
-                    //    calculation *= (Int64)item;
-                    //}
+                    foreach (var item in values)
+                    {
+                        evaluation = !(bool)item;
+                    }
+                }
+
+                if (operation == "AND")
+                {
+                    foreach (var item in values)
+                    {
+                        if ((bool)item)
+                        {
+                            evaluation = true;
+                        }
+                        else
+                        {
+                            evaluation = false;
+                            break;
+                        }
+                    }
                 }
 
                 if (operation == "OR")
                 {
-                    //foreach (var item in values)
-                    //{
-                    //    calculation *= (Int64)item;
-                    //}
+                    foreach (var item in values)
+                    {
+                        if ((bool)item)
+                        {
+                            evaluation = true;
+                            break;
+                        }
+                    }
                 }
 
                 if (operation == "IF")
@@ -208,10 +241,10 @@ namespace Testing
 
                 if (operation == "CONCAT")
                 {
-                    //foreach (var item in values)
-                    //{
-                    //    calculation *= (Int64)item;
-                    //}
+                    foreach (var item in values)
+                    {
+                        concatenation += ((string)item);
+                    }
                 }
 
                 var formula = calculated.FirstOrDefault(x => x.First().Contains('='));
@@ -222,6 +255,12 @@ namespace Testing
                 {
                     calculated.Insert(index, new[] { calculation.ToString() });
                 }
+
+                else if (!string.IsNullOrEmpty(concatenation))
+                {
+                    calculated.Insert(index, new[] { concatenation });
+                }
+
                 else
                 {
                     calculated.Insert(index, new[] { evaluation.ToString() });
