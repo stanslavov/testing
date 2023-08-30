@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Testing
@@ -20,56 +21,57 @@ namespace Testing
                 //Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                //var test = excelData.Sheets[7].Data;
+                var test = excelData.Sheets[23].Data;
 
                 var cells = new Dictionary<string, object>();
                 var resultSheets = new List<ResultSheet>();
                 var post = new ResultFile()
                 {
-                    Email = "stanislav.slavov88@gmail.com",
+                    Email = "stanislav.slavov@gmail.com",
                     Results = resultSheets.ToArray()
                 };
 
-                foreach (var sheet in excelData.Sheets)
-                {
-                    for (int i = 0; i < sheet.Data.Count; i++)
-                    {
-                        for (int j = 0; j < sheet.Data[i].Length; j++)
-                        {
-                            var obj = sheet.Data[i][j];
-                            string num = (i + 1).ToString();
-                            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                            var cell = letter + num;
-
-                            cells.Add(cell, obj);
-                        }
-                    }
-
-                    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
-
-                    cells.Clear();
-                }
-
-                post.Results = resultSheets.ToArray();
-
-                //for (int i = 0; i < test.Count; i++)
+                //foreach (var sheet in excelData.Sheets)
                 //{
-                //    for (int j = 0; j < test[i].Length; j++)
+                //    for (int i = 0; i < sheet.Data.Count; i++)
                 //    {
-                //        var obj = test[i][j];
-                //        string num = (i + 1).ToString();
-                //        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                //        var cell = letter + num;
+                //        for (int j = 0; j < sheet.Data[i].Length; j++)
+                //        {
+                //            var obj = sheet.Data[i][j];
+                //            string num = (i + 1).ToString();
+                //            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                //            var cell = letter + num;
 
-                //        cells.Add(cell, obj);
+                //            cells.Add(cell, obj);
+                //        }
                 //    }
+
+                //    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
+
+                //    cells.Clear();
                 //}
 
-                //var results = Calculate(cells);
+                //post.Results = resultSheets.ToArray();
+
+                for (int i = 0; i < test.Count; i++)
+                {
+                    for (int j = 0; j < test[i].Length; j++)
+                    {
+                        var obj = test[i][j];
+                        string num = (i + 1).ToString();
+                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                        var cell = letter + num;
+
+                        cells.Add(cell, obj);
+                    }
+                }
+
+                var results = Calculate(cells);
 
                 var newPostJson = JsonConvert.SerializeObject(post);
                 Console.WriteLine(newPostJson);
                 //var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
+                //Console.WriteLine(payload);
                 //var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
                 //Console.WriteLine(res);
             }
@@ -82,17 +84,23 @@ namespace Testing
             Regex regex3 = new Regex(@"\=([A-Z]+)\(.([A-Z][a-z]+)..........([A-Z][a-z]+.).\)");
             Regex regex4 = new Regex(@"\=([A-Z]+)\(([A-Z][0-9])....([a-z]+)....([[A-Z][0-9])\)");
             Regex regex5 = new Regex(@"(=)([A-Z][0-9])");
+
             string operation = string.Empty;
             var columnFormula = 0;
             var rowFormula = 0;
+
             string[] operands = Array.Empty<string>();
 
             var calculated = new List<string[]>();
-            var lastCellRowNum = int.Parse(cells.Last().Key[1].ToString());
 
-            for (int i = 0; i < lastCellRowNum; i++)
+            if (cells.Count > 0)
             {
-                calculated.Add(new string[cells.Count]);
+                var lastCellRowNum = int.Parse(cells.Last().Key[1].ToString());
+
+                for (int i = 0; i < lastCellRowNum; i++)
+                {
+                    calculated.Add(new string[cells.Count]);
+                }
             }
 
             foreach (var cell in cells)
@@ -108,7 +116,7 @@ namespace Testing
                     operation = match.Groups[1].Value;
                     rowFormula = cellRow - 1;
                     columnFormula = cellColumn;
-                    operands = match.Groups[2].Value.Split(", ");
+                    operands = match.Groups[22].Value.Split(", ");
                 }
 
                 var match2 = regex2.Match(cell.ToString());
@@ -146,7 +154,20 @@ namespace Testing
                 if (match5.Success)
                 {
                     operation = match5.Groups[1].Value;
-                    calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
+
+                    if (cells[match5.Groups[2].Value].ToString().Contains("="))
+                    {
+                        //var str = (string)cells.Values.FirstOrDefault(x => x.GetType() == typeof(string));
+                        //var str = (string)cells.Values.FirstOrDefault(x => char.IsLower(x.ToString()));
+                        var str = cells.Values.First(x => char.IsLower((char)x)).ToString();
+                        calculated[cellRow - 1][cellColumn] = str;
+                    }
+                    else
+                    {
+                        calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
+                    }
+
+
                 }
 
                 calculated = CalculateFormula(operation, operands, cells, calculated, rowFormula, columnFormula);
@@ -328,7 +349,7 @@ namespace Testing
 
                 else if (!values.Any())
                 {
-                    calculated[rowFormula][columnFormula] = "#ERROR: Incompatible types";
+                    calculated[rowFormula][columnFormula] = cells[operands[0]].ToString() + ", " + cells[operands[1]].ToString() + ", " + "#ERROR: Incompatible types";
                 }
 
                 else
