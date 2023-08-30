@@ -90,8 +90,14 @@ namespace Testing
             var calculated = new List<string[]>();
             calculated.Add(new string[cells.Count]);
 
+            for (int i = 0; i < cells.Count; i++)
+            {
+                calculated.Add(new string[cells.Count]);
+            }
+            
             foreach (var cell in cells)
             {
+<<<<<<< HEAD
                 //var cellRow = int.Parse(cell.Key[1].ToString());
                 //calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
 
@@ -100,6 +106,10 @@ namespace Testing
                 calculated[cellRow - 1][cellColumn] = cell.Value.ToString();
 
                 //calculated.Add(new[] { cell.Value.ToString() });
+=======
+                var cellRow = int.Parse(cell.Key[1].ToString());
+                calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
+>>>>>>> c3bda00817f39801591b0fdbaee2b5b8466f071a
 
                 var match = regex.Match(cell.ToString());
 
@@ -146,11 +156,17 @@ namespace Testing
                 if (match5.Success)
                 {
                     operation = match5.Groups[1].Value;
+<<<<<<< HEAD
                     calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
                     //var op = calculated.FirstOrDefault(x => x.First().Contains('='));
                     //var ind = calculated.IndexOf(op);
                     //calculated.Remove(op);
                     //calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
+=======
+                    var op = calculated.FirstOrDefault(x => x.First().Contains('='));
+                    var ind = calculated.IndexOf(op);
+                    calculated[cellRow - 1][cellRow - 1] = cells[match5.Groups[2].Value].ToString();
+>>>>>>> c3bda00817f39801591b0fdbaee2b5b8466f071a
                 }
 
                 calculated = CalculateFormula(operation, operands, cells, calculated, rowFormula, columnFormula);
