@@ -21,7 +21,7 @@ namespace Testing
                 //Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                //var test = excelData.Sheets[19].Data;
+                var test = excelData.Sheets[7].Data;
 
                 var cells = new Dictionary<string, object>();
                 var resultSheets = new List<ResultSheet>();
@@ -31,42 +31,42 @@ namespace Testing
                     Results = resultSheets.ToArray()
                 };
 
-                foreach (var sheet in excelData.Sheets)
-                {
-                    for (int i = 0; i < sheet.Data.Count; i++)
-                    {
-                        for (int j = 0; j < sheet.Data[i].Length; j++)
-                        {
-                            var obj = sheet.Data[i][j];
-                            string num = (i + 1).ToString();
-                            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                            var cell = letter + num;
+                //foreach (var sheet in excelData.Sheets)
+                //{
+                //    for (int i = 0; i < sheet.Data.Count; i++)
+                //    {
+                //        for (int j = 0; j < sheet.Data[i].Length; j++)
+                //        {
+                //            var obj = sheet.Data[i][j];
+                //            string num = (i + 1).ToString();
+                //            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                //            var cell = letter + num;
 
-                            cells.Add(cell, obj);
-                        }
-                    }
+                //            cells.Add(cell, obj);
+                //        }
+                //    }
 
-                    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
+                //    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
 
-                    cells.Clear();
-                }
+                //    cells.Clear();
+                //}
 
                 post.Results = resultSheets.ToArray();
 
-                //for (int i = 0; i < test.Count; i++)
-                //{
-                //    for (int j = 0; j < test[i].Length; j++)
-                //    {
-                //        var obj = test[i][j];
-                //        string num = (i + 1).ToString();
-                //        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                //        var cell = letter + num;
+                for (int i = 0; i < test.Count; i++)
+                {
+                    for (int j = 0; j < test[i].Length; j++)
+                    {
+                        var obj = test[i][j];
+                        string num = (i + 1).ToString();
+                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                        var cell = letter + num;
 
-                //        cells.Add(cell, obj);
-                //    }
-                //}
+                        cells.Add(cell, obj);
+                    }
+                }
 
-                //var results = Calculate(cells);
+                var results = Calculate(cells);
 
                 var newPostJson = JsonConvert.SerializeObject(post);
                 Console.WriteLine(newPostJson);
@@ -90,14 +90,8 @@ namespace Testing
             var calculated = new List<string[]>();
             calculated.Add(new string[cells.Count]);
 
-            for (int i = 0; i < cells.Count; i++)
-            {
-                calculated.Add(new string[cells.Count]);
-            }
-            
             foreach (var cell in cells)
             {
-<<<<<<< HEAD
                 //var cellRow = int.Parse(cell.Key[1].ToString());
                 //calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
 
@@ -106,10 +100,6 @@ namespace Testing
                 calculated[cellRow - 1][cellColumn] = cell.Value.ToString();
 
                 //calculated.Add(new[] { cell.Value.ToString() });
-=======
-                var cellRow = int.Parse(cell.Key[1].ToString());
-                calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
->>>>>>> c3bda00817f39801591b0fdbaee2b5b8466f071a
 
                 var match = regex.Match(cell.ToString());
 
@@ -156,17 +146,11 @@ namespace Testing
                 if (match5.Success)
                 {
                     operation = match5.Groups[1].Value;
-<<<<<<< HEAD
                     calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
                     //var op = calculated.FirstOrDefault(x => x.First().Contains('='));
                     //var ind = calculated.IndexOf(op);
                     //calculated.Remove(op);
                     //calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
-=======
-                    var op = calculated.FirstOrDefault(x => x.First().Contains('='));
-                    var ind = calculated.IndexOf(op);
-                    calculated[cellRow - 1][cellRow - 1] = cells[match5.Groups[2].Value].ToString();
->>>>>>> c3bda00817f39801591b0fdbaee2b5b8466f071a
                 }
 
                 calculated = CalculateFormula(operation, operands, cells, calculated, rowFormula, columnFormula);
