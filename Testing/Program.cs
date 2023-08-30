@@ -21,7 +21,7 @@ namespace Testing
                 //Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                //var test = excelData.Sheets[15].Data;
+                //var test = excelData.Sheets[19].Data;
 
                 var cells = new Dictionary<string, object>();
                 var resultSheets = new List<ResultSheet>();
@@ -69,10 +69,10 @@ namespace Testing
                 //var results = Calculate(cells);
 
                 var newPostJson = JsonConvert.SerializeObject(post);
-                //Console.WriteLine(newPostJson);
-                var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
-                var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
-                Console.WriteLine(res);
+                Console.WriteLine(newPostJson);
+                //var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
+                //var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
+                //Console.WriteLine(res);
             }
         }
 
@@ -84,22 +84,30 @@ namespace Testing
             Regex regex4 = new Regex(@"\=([A-Z]+)\(([A-Z][0-9])....([a-z]+)....([[A-Z][0-9])\)");
             Regex regex5 = new Regex(@"(=)([A-Z][0-9])");
             string operation = string.Empty;
+            var columnFormula = 0;
+            var rowFormula = 0;
             string[] operands = Array.Empty<string>();
-            var values = new List<object>();
             var calculated = new List<string[]>();
-            long calculation = 0;
-            bool evaluation = false;
-            string concatenation = string.Empty;
+            calculated.Add(new string[cells.Count]);
 
             foreach (var cell in cells)
             {
-                calculated.Add(new[] { cell.Value.ToString() });
+                //var cellRow = int.Parse(cell.Key[1].ToString());
+                //calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
+
+                var cellRow = int.Parse(cell.Key[1].ToString());
+                var cellColumn = (int)Enum.Parse<EnumAlphabet>(cell.Key[0].ToString());
+                calculated[cellRow - 1][cellColumn] = cell.Value.ToString();
+
+                //calculated.Add(new[] { cell.Value.ToString() });
 
                 var match = regex.Match(cell.ToString());
 
                 if (match.Success)
                 {
                     operation = match.Groups[1].Value;
+                    rowFormula = cellRow - 1;
+                    columnFormula = cellColumn;
                     operands = match.Groups[2].Value.Split(", ");
                 }
 
@@ -108,6 +116,8 @@ namespace Testing
                 if (match2.Success)
                 {
                     operation = match2.Groups[1].Value;
+                    rowFormula = cellRow - 1;
+                    columnFormula = cellColumn;
                     operands = match2.Groups[3].Value.Split(", ");
                 }
 
@@ -116,6 +126,8 @@ namespace Testing
                 if (match3.Success)
                 {
                     operation = match3.Groups[1].Value;
+                    rowFormula = cellRow - 1;
+                    columnFormula = cellColumn;
                     operands = new[] { match3.Groups[2].Value + ", " + match3.Groups[3].Value };
                 }
 
@@ -124,6 +136,8 @@ namespace Testing
                 if (match4.Success)
                 {
                     operation = match4.Groups[1].Value;
+                    rowFormula = cellRow - 1;
+                    columnFormula = cellColumn;
                     operands = new[] { cells[match4.Groups[2].Value] + " " + match4.Groups[3].Value + " " + cells[match4.Groups[4].Value] };
                 }
 
@@ -132,12 +146,25 @@ namespace Testing
                 if (match5.Success)
                 {
                     operation = match5.Groups[1].Value;
-                    var op = calculated.FirstOrDefault(x => x.First().Contains('='));
-                    var ind = calculated.IndexOf(op);
-                    calculated.Remove(op);
-                    calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
+                    calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
+                    //var op = calculated.FirstOrDefault(x => x.First().Contains('='));
+                    //var ind = calculated.IndexOf(op);
+                    //calculated.Remove(op);
+                    //calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
                 }
+
+                calculated = CalculateFormula(operation, operands, cells, calculated, rowFormula, columnFormula);
             }
+
+            return calculated;
+        }
+
+        public static List<string[]> CalculateFormula(string operation, string[] operands, Dictionary<string, object> cells, List<string[]> calculated, int rowFormula, int columnFormula)
+        {
+            var values = new List<object>();
+            long calculation = 0;
+            bool evaluation = false;
+            string concatenation = string.Empty;
 
             if (Enum.TryParse(operation, out EnumOperations result))
             {
@@ -175,19 +202,6 @@ namespace Testing
                             break;
                         }
                     }
-
-                    //var type = cells[operands[0]].GetType();
-
-                    //for (int i = 0; i < operands.Length; i++)
-                    //{
-                    //    if (!cells.ContainsKey(operands[i]) || type != cells[operands[i]].GetType())
-                    //    {
-                    //        Console.WriteLine("#ERROR: Incompatible types");
-                    //        break;
-                    //    }
-
-                    //    values.Add(cells[operands[i]]);
-                    //}
                 }
 
                 if (operation == "SUM")
@@ -294,28 +308,32 @@ namespace Testing
                     }
                 }
 
-                var formula = calculated.FirstOrDefault(x => x.First().Contains('='));
-                var index = calculated.IndexOf(formula);
-                calculated.Remove(formula);
+                //var formula = calculated.FirstOrDefault(x => x.First().Contains('='));
+                //var index = calculated.IndexOf(formula);
+                //calculated.Remove(formula);
 
                 if (calculation > 0)
                 {
-                    calculated.Insert(index, new[] { calculation.ToString() });
+                    calculated[rowFormula][columnFormula] = calculation.ToString();
+                    //calculated.Insert(index, new[] { calculation.ToString() });
                 }
 
                 else if (!string.IsNullOrEmpty(concatenation))
                 {
-                    calculated.Insert(index, new[] { concatenation });
+                    calculated[rowFormula][columnFormula] = concatenation;
+                    //calculated.Insert(index, new[] { concatenation });
                 }
 
                 else if (!values.Any())
                 {
-                    calculated.Insert(index, new[] { cells[operands[0]].ToString(), cells[operands[1]].ToString(), "#ERROR: Incompatible types" });
+                    calculated[rowFormula][columnFormula] = "#ERROR: Incompatible types";
+                    //calculated.Insert(index, new[] { cells[operands[0]].ToString(), cells[operands[1]].ToString(), "#ERROR: Incompatible types" });
                 }
 
                 else
                 {
-                    calculated.Insert(index, new[] { evaluation.ToString() });
+                    calculated[rowFormula][columnFormula] = evaluation.ToString();
+                    //calculated.Insert(index, new[] { evaluation.ToString() });
                 }
             }
 
