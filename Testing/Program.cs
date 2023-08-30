@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Testing
@@ -83,7 +82,6 @@ namespace Testing
             Regex regex3 = new Regex(@"\=([A-Z]+)\(.([A-Z][a-z]+)..........([A-Z][a-z]+.).\)");
             Regex regex4 = new Regex(@"\=([A-Z]+)\(([A-Z][0-9])....([a-z]+)....([[A-Z][0-9])\)");
             Regex regex5 = new Regex(@"(=)([A-Z][0-9])");
-            var newList = new List<string[]>();
             string operation = string.Empty;
             var columnFormula = 0;
             var rowFormula = 0;
