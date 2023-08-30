@@ -21,7 +21,7 @@ namespace Testing
                 //Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[7].Data;
+                //var test = excelData.Sheets[7].Data;
 
                 var cells = new Dictionary<string, object>();
                 var resultSheets = new List<ResultSheet>();
@@ -31,42 +31,42 @@ namespace Testing
                     Results = resultSheets.ToArray()
                 };
 
-                //foreach (var sheet in excelData.Sheets)
-                //{
-                //    for (int i = 0; i < sheet.Data.Count; i++)
-                //    {
-                //        for (int j = 0; j < sheet.Data[i].Length; j++)
-                //        {
-                //            var obj = sheet.Data[i][j];
-                //            string num = (i + 1).ToString();
-                //            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                //            var cell = letter + num;
+                foreach (var sheet in excelData.Sheets)
+                {
+                    for (int i = 0; i < sheet.Data.Count; i++)
+                    {
+                        for (int j = 0; j < sheet.Data[i].Length; j++)
+                        {
+                            var obj = sheet.Data[i][j];
+                            string num = (i + 1).ToString();
+                            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                            var cell = letter + num;
 
-                //            cells.Add(cell, obj);
-                //        }
-                //    }
+                            cells.Add(cell, obj);
+                        }
+                    }
 
-                //    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
+                    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
 
-                //    cells.Clear();
-                //}
+                    cells.Clear();
+                }
 
                 post.Results = resultSheets.ToArray();
 
-                for (int i = 0; i < test.Count; i++)
-                {
-                    for (int j = 0; j < test[i].Length; j++)
-                    {
-                        var obj = test[i][j];
-                        string num = (i + 1).ToString();
-                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                        var cell = letter + num;
+                //for (int i = 0; i < test.Count; i++)
+                //{
+                //    for (int j = 0; j < test[i].Length; j++)
+                //    {
+                //        var obj = test[i][j];
+                //        string num = (i + 1).ToString();
+                //        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                //        var cell = letter + num;
 
-                        cells.Add(cell, obj);
-                    }
-                }
+                //        cells.Add(cell, obj);
+                //    }
+                //}
 
-                var results = Calculate(cells);
+                //var results = Calculate(cells);
 
                 var newPostJson = JsonConvert.SerializeObject(post);
                 Console.WriteLine(newPostJson);
@@ -83,23 +83,25 @@ namespace Testing
             Regex regex3 = new Regex(@"\=([A-Z]+)\(.([A-Z][a-z]+)..........([A-Z][a-z]+.).\)");
             Regex regex4 = new Regex(@"\=([A-Z]+)\(([A-Z][0-9])....([a-z]+)....([[A-Z][0-9])\)");
             Regex regex5 = new Regex(@"(=)([A-Z][0-9])");
+            var newList = new List<string[]>();
             string operation = string.Empty;
             var columnFormula = 0;
             var rowFormula = 0;
             string[] operands = Array.Empty<string>();
+
             var calculated = new List<string[]>();
-            calculated.Add(new string[cells.Count]);
+            var lastCellRowNum = int.Parse(cells.Last().Key[1].ToString());
+
+            for (int i = 0; i < lastCellRowNum; i++)
+            {
+                calculated.Add(new string[cells.Count]);
+            }
 
             foreach (var cell in cells)
             {
-                //var cellRow = int.Parse(cell.Key[1].ToString());
-                //calculated[cellRow - 1][cellRow - 1] = cell.Value.ToString();
-
                 var cellRow = int.Parse(cell.Key[1].ToString());
                 var cellColumn = (int)Enum.Parse<EnumAlphabet>(cell.Key[0].ToString());
                 calculated[cellRow - 1][cellColumn] = cell.Value.ToString();
-
-                //calculated.Add(new[] { cell.Value.ToString() });
 
                 var match = regex.Match(cell.ToString());
 
@@ -147,13 +149,21 @@ namespace Testing
                 {
                     operation = match5.Groups[1].Value;
                     calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
-                    //var op = calculated.FirstOrDefault(x => x.First().Contains('='));
-                    //var ind = calculated.IndexOf(op);
-                    //calculated.Remove(op);
-                    //calculated.Insert(ind, new[] { cells[match5.Groups[2].Value].ToString() });
                 }
 
                 calculated = CalculateFormula(operation, operands, cells, calculated, rowFormula, columnFormula);
+            }
+
+            for (int i = 0; i < calculated.Count; i++)
+            {
+                for (int j = 0; j < calculated[i].Length; j++)
+                {
+                    if (calculated[i][j] == null)
+                    {
+                        calculated[i] = calculated[i].Take(int.Parse(j.ToString())).ToArray();
+                        break;
+                    }
+                }
             }
 
             return calculated;
@@ -308,32 +318,24 @@ namespace Testing
                     }
                 }
 
-                //var formula = calculated.FirstOrDefault(x => x.First().Contains('='));
-                //var index = calculated.IndexOf(formula);
-                //calculated.Remove(formula);
-
                 if (calculation > 0)
                 {
                     calculated[rowFormula][columnFormula] = calculation.ToString();
-                    //calculated.Insert(index, new[] { calculation.ToString() });
                 }
 
                 else if (!string.IsNullOrEmpty(concatenation))
                 {
                     calculated[rowFormula][columnFormula] = concatenation;
-                    //calculated.Insert(index, new[] { concatenation });
                 }
 
                 else if (!values.Any())
                 {
                     calculated[rowFormula][columnFormula] = "#ERROR: Incompatible types";
-                    //calculated.Insert(index, new[] { cells[operands[0]].ToString(), cells[operands[1]].ToString(), "#ERROR: Incompatible types" });
                 }
 
                 else
                 {
                     calculated[rowFormula][columnFormula] = evaluation.ToString();
-                    //calculated.Insert(index, new[] { evaluation.ToString() });
                 }
             }
 
