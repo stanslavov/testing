@@ -21,7 +21,7 @@ namespace Testing
                 //Console.WriteLine(json);
 
                 var excelData = JsonConvert.DeserializeObject<ExcelFile>(json);
-                var test = excelData.Sheets[23].Data;
+                //var test = excelData.Sheets[8].Data;
 
                 var cells = new Dictionary<string, object>();
                 var resultSheets = new List<ResultSheet>();
@@ -31,49 +31,49 @@ namespace Testing
                     Results = resultSheets.ToArray()
                 };
 
-                //foreach (var sheet in excelData.Sheets)
-                //{
-                //    for (int i = 0; i < sheet.Data.Count; i++)
-                //    {
-                //        for (int j = 0; j < sheet.Data[i].Length; j++)
-                //        {
-                //            var obj = sheet.Data[i][j];
-                //            string num = (i + 1).ToString();
-                //            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                //            var cell = letter + num;
-
-                //            cells.Add(cell, obj);
-                //        }
-                //    }
-
-                //    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
-
-                //    cells.Clear();
-                //}
-
-                //post.Results = resultSheets.ToArray();
-
-                for (int i = 0; i < test.Count; i++)
+                foreach (var sheet in excelData.Sheets)
                 {
-                    for (int j = 0; j < test[i].Length; j++)
+                    for (int i = 0; i < sheet.Data.Count; i++)
                     {
-                        var obj = test[i][j];
-                        string num = (i + 1).ToString();
-                        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
-                        var cell = letter + num;
+                        for (int j = 0; j < sheet.Data[i].Length; j++)
+                        {
+                            var obj = sheet.Data[i][j];
+                            string num = (i + 1).ToString();
+                            var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                            var cell = letter + num;
 
-                        cells.Add(cell, obj);
+                            cells.Add(cell, obj);
+                        }
                     }
+
+                    resultSheets.Add(new ResultSheet { Id = sheet.Id, Data = Calculate(cells) });
+
+                    cells.Clear();
                 }
 
-                var results = Calculate(cells);
+                post.Results = resultSheets.ToArray();
+
+                //for (int i = 0; i < test.Count; i++)
+                //{
+                //    for (int j = 0; j < test[i].Length; j++)
+                //    {
+                //        var obj = test[i][j];
+                //        string num = (i + 1).ToString();
+                //        var letter = Enum.Parse<EnumAlphabet>(j.ToString());
+                //        var cell = letter + num;
+
+                //        cells.Add(cell, obj);
+                //    }
+                //}
+
+                //var results = Calculate(cells);
 
                 var newPostJson = JsonConvert.SerializeObject(post);
                 Console.WriteLine(newPostJson);
-                //var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
-                //Console.WriteLine(payload);
-                //var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
-                //Console.WriteLine(res);
+                var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
+                Console.WriteLine(payload);
+                var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
+                Console.WriteLine(res);
             }
         }
 
@@ -116,7 +116,7 @@ namespace Testing
                     operation = match.Groups[1].Value;
                     rowFormula = cellRow - 1;
                     columnFormula = cellColumn;
-                    operands = match.Groups[22].Value.Split(", ");
+                    operands = match.Groups[2].Value.Split(", ");
                 }
 
                 var match2 = regex2.Match(cell.ToString());
@@ -157,16 +157,13 @@ namespace Testing
 
                     if (cells[match5.Groups[2].Value].ToString().Contains("="))
                     {
-                        //var str = (string)cells.Values.FirstOrDefault(x => x.GetType() == typeof(string));
-                        //var str = (string)cells.Values.FirstOrDefault(x => char.IsLower(x.ToString()));
-                        var str = cells.Values.First(x => char.IsLower((char)x)).ToString();
+                        var str = cells.Values.First(x => x.ToString().Any(y => char.IsLower(char.Parse(y.ToString())))).ToString();
                         calculated[cellRow - 1][cellColumn] = str;
                     }
                     else
                     {
                         calculated[cellRow - 1][cellColumn] = cells[match5.Groups[2].Value].ToString();
                     }
-
 
                 }
 
