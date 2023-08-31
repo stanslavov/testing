@@ -69,11 +69,9 @@ namespace Testing
                 //var results = Calculate(cells);
 
                 var newPostJson = JsonConvert.SerializeObject(post);
-                Console.WriteLine(newPostJson);
+                //Console.WriteLine(newPostJson);
                 var payload = new StringContent(newPostJson, Encoding.UTF8, "application/json");
-                Console.WriteLine(payload);
                 var res = client.PostAsync(endpoint2, payload).Result.Content.ReadAsStringAsync().Result;
-                Console.WriteLine(res);
             }
         }
 

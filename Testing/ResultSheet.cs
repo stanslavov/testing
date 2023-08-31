@@ -6,8 +6,6 @@ namespace Testing
     {
         public string Id { get; set; }
 
-        //public object[] Data { get; set; }
-
         public List<string[]> Data { get; set; }
     }
 }
